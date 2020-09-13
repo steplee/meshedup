@@ -30,7 +30,7 @@ if not DC:
     #elev = np.random.uniform(0,1,size=(512,512)).astype(np.float32)
     elev = np.ones((512,512),dtype=np.float32)*.5
 else:
-    meta = get_dc_lidar({'stride':8})
+    meta = get_dc_lidar({'stride':16})
     pts = meta['pts']
     #elev = np.random.uniform(0,.1,size=(512,512)).astype(np.float32)
     #elev = elev * .000001 + .01
@@ -44,7 +44,8 @@ else:
     x = torch.cuda.sparse.FloatTensor(coo.T, val).coalesce()
     cnt = torch.cuda.sparse.FloatTensor(coo.T, one).coalesce()
     x.values().copy_(x.values()/cnt.values()) # Now we have average values
-    elev = x.to_dense().cpu()
+    elev = x.to_dense().cpu().numpy()
+    elev = cv2.medianBlur(elev, 5)
 
 dt_opts = pymeshedup_c.DTOpts()
 dt_opts.createMesh = False
@@ -80,24 +81,29 @@ for i in range(100000):
     app.render()
 
     glEnable(GL_BLEND)
+    #glBlendFunc(GL_SRC_ALPHA, GL_ONE)
 
     draw_gizmo(2)
 
     glColor4f(0,0,1,.5)
 
-    glEnableClientState(GL_VERTEX_ARRAY)
-    if pts is not None:
-        glColor4f(.6, .6, .99, .6)
-        glPointSize(1)
-        glVertexPointer(3, GL_FLOAT, 0, pts)
-        glPointSize(1)
-        glDrawArrays(GL_POINTS, 0, len(pts))
 
-    glColor4f(1.,1,1,.9)
+    glColor4f(1.,1,1,1)
     vu.mesh.render()
     glLineWidth(1.0)
     if RENDER_COMPLEX: vu.assignmentMesh.render()
     glLineWidth(1.0)
+
+    '''
+    if pts is not None:
+        glColor4f(.6, .6, .99, .15)
+        glEnableClientState(GL_VERTEX_ARRAY)
+        glPointSize(1)
+        glVertexPointer(3, GL_FLOAT, 0, pts)
+        glPointSize(1)
+        glDrawArrays(GL_POINTS, 0, len(pts))
+        glDisableClientState(GL_VERTEX_ARRAY)
+    '''
 
     time.sleep(.008)
     glutSwapBuffers()

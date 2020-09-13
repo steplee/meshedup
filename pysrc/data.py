@@ -87,8 +87,10 @@ def get_dc_lidar(cfg):
     endPoints = endPoints[:, :3] / endPoints[:, 3:]
     utm_bbox = *endPoints[0,:2], *(endPoints[1,:2]-endPoints[0,:2])
     ox,oy = -2, -8 # Tiff or point-cloud is mis-aligned!
+    ox,oy = 0,0
     utm_bbox = (utm_bbox[0]+ox,utm_bbox[1]+oy,utm_bbox[2],utm_bbox[3])
-    img = get_tiff_patch('/data/dc_tiffs/dc.tif', utm_bbox, 2048*2)
+    #img = get_tiff_patch('/data/dc_tiffs/dc.tif', utm_bbox, 2048*2)
+    img = get_tiff_patch('/data/dc_tiffs/dupont1/whole.32618.tif', utm_bbox, 2048*2)
 
     return dict(
             pts=pts,

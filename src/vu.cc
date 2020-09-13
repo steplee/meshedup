@@ -219,7 +219,7 @@ void VuMeshing::runWithElevationMap(RowMatrixCRef elev) {
     Vector4 color;
     float alpha = .02;
     if (mfmc.minCutS.find(cellId0) == mfmc.minCutS.end()) color = Vector4 { 1., 0., 0., alpha };
-    else color = Vector4 { 0., 1., 0., alpha };
+    else color = Vector4 { 1., 1., 1., alpha };
 
     /*
     appendRow3(pts_, center_pos/4., pt_ii);

@@ -133,7 +133,6 @@ void IndexedMesh::render() {
       //glClientActiveTexture(GL_TEXTURE0);
       glEnableClientState(GL_TEXTURE_COORD_ARRAY);
       glTexCoordPointer(2, GL_FLOAT, 0, (void*)uvs.data());
-      glColor4f(1,1,1,1.);
     }
 
     glDrawElements(mode, inds.size(), GL_UNSIGNED_INT, (void*)inds.data());
