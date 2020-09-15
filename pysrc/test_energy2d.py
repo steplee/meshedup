@@ -22,24 +22,36 @@ def make_tex_from_img(img):
     glBindTexture(GL_TEXTURE_2D, 0)
     return tex
 
+def show_normalized(x, name='a',time=0):
+    from matplotlib.cm import cubehelix as inferno
+    if isinstance(x,torch.Tensor): x = x.cpu().numpy()
+    x = x.squeeze().astype(np.float32)
+    assert x.ndim == 2
+    x = x - np.quantile(x,.01)
+    x = np.clip(x / x.max(),0,1)
+    x = (inferno(x)[...,:3]*255).astype(np.uint8)[...,[2,1,0]]
+    cv2.imshow(name,x)
+    cv2.waitKey(time)
+
 DC = True
 RENDER_COMPLEX = True
 
 if not DC:
     pts = np.random.uniform(0,1,size=(900,3)).astype(np.float32)
-    #elev = np.random.uniform(0,1,size=(512,512)).astype(np.float32)
-    elev = np.ones((512,512),dtype=np.float32)*.5
+    elev = np.random.uniform(0,1,size=(512,512)).astype(np.float32)
+    #elev = np.ones((512,512),dtype=np.float32)*.5
 else:
-    STRIDE = 16
+    STRIDE = 2
     meta = get_dc_lidar({'stride':STRIDE})
     pts = meta['pts']
     #elev = np.random.uniform(0,.1,size=(512,512)).astype(np.float32)
     #elev = elev * .000001 + .01
 
     # Form elev by some sparse tensor magic.
-    if STRIDE < 15: res = 1024
-    elif STRIDE < 32: res = 512+256
-    else: res = 512
+    #if STRIDE < 15: res = 1024
+    #elif STRIDE < 32: res = 512+256
+    #else: res = 512
+    res = 512*2
     ptsPix = (pts * res).astype(np.int64)
     coo = torch.from_numpy(ptsPix[:,:2])
     val = torch.from_numpy(pts[:,2])
@@ -47,20 +59,34 @@ else:
     x = torch.cuda.sparse.FloatTensor(coo.T, val).coalesce()
     cnt = torch.cuda.sparse.FloatTensor(coo.T, one).coalesce()
     x.values().copy_(x.values()/cnt.values()) # Now we have average values
-    elev = x.to_dense().cpu().numpy()
-    elev = cv2.medianBlur(elev, 5)
+    elev = np.copy(x.to_dense().cpu().numpy(),'C')
+    badElev = np.copy((cnt.to_dense().cpu()==0).to(torch.float32).numpy(),'C')
+    #badElev = np.copy(((cnt.to_dense().cpu()==0)*0).to(torch.float32).numpy(),'C')
+    #show_normalized(badElev, 'BAD')
+    #elev = cv2.medianBlur(elev, 5)
 
-dt_opts = pymeshedup_c.DTOpts()
-dt_opts.createMesh = False
-dt = pymeshedup_c.DelaunayTetrahedrialization(dt_opts)
-st = time.time()
-dt.run(pts)
-print(' - dt took {:1f}s'.format(time.time()-st))
-#dt.mesh.bake(True)
 
-vu = pymeshedup_c.VuMeshing(dt,1)
-vu.runWithElevationMap(elev)
+Z_MULT = 400 * (res//512)
+elev = elev * Z_MULT
+print(' - elev:', elev)
+surfacer = pymeshedup_c.EnergySurfacing2d()
+surfacer.dataShape = pymeshedup_c.SHAPE_ABSOLUTE
+surfacer.dataBoundaryCost = 99999
+surfacer.smoothMult = 4
+surfacer.runWithElevationMap(elev, badElev)
+final = np.copy(surfacer.output, 'C')
+elev_ = cv2.medianBlur(elev, 3)
+dimg = np.hstack((elev_,final)) / Z_MULT
+while dimg.shape[0] > 1024: dimg = cv2.pyrDown(dimg)
+show_normalized(dimg, 'medianFilter(orig)/output', 1)
+show_normalized(abs(elev-final), '|orig-output|')
 
+del surfacer
+import gc
+gc.collect()
+
+print(' - Done')
+sys.exit(0)
 
 
 app = OctreeApp((1000,1000))
@@ -113,3 +139,4 @@ for i in range(100000):
     glutPostRedisplay()
     glutMainLoopEvent()
     glFlush()
+

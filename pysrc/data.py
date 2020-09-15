@@ -60,7 +60,7 @@ def get_dc_lidar(cfg):
 
         st1 = time.time()
         qq = cfg.get('qq',.05)
-        qqz0, qqz1 = .001, .95 # Because many high z's are outliers, reject points >quantile(qqz1)
+        qqz0, qqz1 = .0000001, .99995 # Because many high z's are outliers, reject points >quantile(qqz1)
         (x1,x2),(y1,y2),(z1,z2) = np.quantile(x[::2],[qq,1-qq]), np.quantile(y[::2],[qq,1-qq]), np.quantile(z[::2],[qqz0,qqz1])
         print('   - las quantile took {:.2f}ms'.format((time.time()-st1)*1000))
 

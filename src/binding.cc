@@ -10,6 +10,7 @@
 #include "dt.h"
 #include "mfmc.h"
 #include "vu.h"
+#include "twod_mrf.h"
 
 //https://stackoverflow.com/questions/48982143/returning-and-passing-around-raw-pod-pointers-arrays-with-python-c-and-pyb
 // Just a pointer type that doesn't delete or refcnt
@@ -103,5 +104,17 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     .def("runWithElevationMap", &VuMeshing::runWithElevationMap)
     .def_readwrite("assignmentMesh", &VuMeshing::assignmentMesh)
     .def_readwrite("mesh", &VuMeshing::mesh);
+
+  m.attr("SHAPE_QUADRATIC") = py::int_(SHAPE_QUADRATIC);
+  m.attr("SHAPE_ABSOLUTE") = py::int_(SHAPE_ABSOLUTE);
+  py::class_<EnergySurfacing2d, std::shared_ptr<EnergySurfacing2d>>(m, "EnergySurfacing2d")
+    .def(py::init<>())
+    .def("runWithElevationMap", &EnergySurfacing2d::runWithElevationMap)
+    .def_readwrite("dataShape", &EnergySurfacing2d::dataShape)
+    .def_readwrite("dataBoundaryCost", &EnergySurfacing2d::dataBoundaryCost)
+    .def_readwrite("smoothMult", &EnergySurfacing2d::smoothMult)
+    .def_readwrite("smoothMult2", &EnergySurfacing2d::smoothMult2)
+    .def_readwrite("output", &EnergySurfacing2d::output)
+    .def_readwrite("mesh", &EnergySurfacing2d::mesh);
 }
 
