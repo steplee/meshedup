@@ -12,6 +12,11 @@
 #include "vu.h"
 #include "twod_mrf.h"
 
+#include <torch/extension.h>
+
+//#include "tensorOctreeToMesh.h"
+IndexedMesh tensorOctreeToMesh(torch::Tensor& t);
+
 //https://stackoverflow.com/questions/48982143/returning-and-passing-around-raw-pod-pointers-arrays-with-python-c-and-pyb
 // Just a pointer type that doesn't delete or refcnt
 template <class T> class ptr_wrapper
@@ -116,5 +121,8 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     .def_readwrite("smoothMult2", &EnergySurfacing2d::smoothMult2)
     .def_readwrite("output", &EnergySurfacing2d::output)
     .def_readwrite("mesh", &EnergySurfacing2d::mesh);
+
+  // Tensor octree stuff
+  m.def("tensorOctreeToMesh", &tensorOctreeToMesh);
 }
 
