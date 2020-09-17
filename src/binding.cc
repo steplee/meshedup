@@ -110,6 +110,8 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   py::class_<EnergySurfacing2d, std::shared_ptr<EnergySurfacing2d>>(m, "EnergySurfacing2d")
     .def(py::init<>())
     .def("runWithElevationMap", &EnergySurfacing2d::runWithElevationMap)
+    .def("make_mesh", &EnergySurfacing2d::make_mesh)
+    .def("make_mesh_simplified", &EnergySurfacing2d::make_mesh_simplified)
     .def_readwrite("dataShape", &EnergySurfacing2d::dataShape)
     .def_readwrite("dataBoundaryCost", &EnergySurfacing2d::dataBoundaryCost)
     .def_readwrite("smoothMult", &EnergySurfacing2d::smoothMult)

@@ -25,6 +25,8 @@ struct EnergySurfacing2d {
   ~EnergySurfacing2d();
 
   void runWithElevationMap(RowMatrixCRef elev, RowMatrixCRef bad);
+  void make_mesh();
+  void make_mesh_simplified();
 
   //MRF::CostVal centerCost    = 0.;
   //MRF::CostVal offCenterCost = 0.;

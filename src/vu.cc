@@ -206,36 +206,38 @@ void VuMeshing::runWithElevationMap(RowMatrixCRef elev) {
   std::cout << " - done.\n";
 
   // Create the 'assignment' mesh.
-  //assignmentMesh.mode = GL_POINTS;
-  assignmentMesh.mode = GL_LINES;
-  RowMatrix pts_(1000,3);
-  RowMatrix colors_(1000,4);
-  int pt_ii = 0;
-  for (auto it = T.finite_cells_begin(), end = T.finite_cells_end(); it != end; ++it) {
-    int32_t cellId0 = cellIds[it];
+  if (false) {
+    //assignmentMesh.mode = GL_POINTS;
+    assignmentMesh.mode = GL_LINES;
+    RowMatrix pts_(1000,3);
+    RowMatrix colors_(1000,4);
+    int pt_ii = 0;
+    for (auto it = T.finite_cells_begin(), end = T.finite_cells_end(); it != end; ++it) {
+      int32_t cellId0 = cellIds[it];
 
-    Vector3 center_pos = Vector3::Zero();
-    for (int i=0; i<4; i++) center_pos += Vector3 { it->vertex(i)->point()[0], it->vertex(i)->point()[1], it->vertex(i)->point()[2] };
-    Vector4 color;
-    float alpha = .02;
-    if (mfmc.minCutS.find(cellId0) == mfmc.minCutS.end()) color = Vector4 { 1., 0., 0., alpha };
-    else color = Vector4 { 1., 1., 1., alpha };
+      Vector3 center_pos = Vector3::Zero();
+      for (int i=0; i<4; i++) center_pos += Vector3 { it->vertex(i)->point()[0], it->vertex(i)->point()[1], it->vertex(i)->point()[2] };
+      Vector4 color;
+      float alpha = .02;
+      if (mfmc.minCutS.find(cellId0) == mfmc.minCutS.end()) color = Vector4 { 1., 0., 0., alpha };
+      else color = Vector4 { 1., 1., 1., alpha };
 
-    /*
-    appendRow3(pts_, center_pos/4., pt_ii);
-    appendRow4(colors_, color, pt_ii);
-    assignmentMesh.inds.push_back(pt_ii);
-    pt_ii++;
-    */
-    appendRow3(pts_, center_pos/4., pt_ii);
-    for (int i=0; i<4; i++) appendRow3(pts_, Vector3 { it->vertex(i)->point()[0], it->vertex(i)->point()[1], it->vertex(i)->point()[2] }, pt_ii+1+i);
-    for (int i=0; i<5; i++) appendRow4(colors_, color, pt_ii+i);
-    assignmentMesh.inds.push_back(pt_ii); assignmentMesh.inds.push_back(pt_ii+1);
-    assignmentMesh.inds.push_back(pt_ii); assignmentMesh.inds.push_back(pt_ii+2);
-    assignmentMesh.inds.push_back(pt_ii); assignmentMesh.inds.push_back(pt_ii+3);
-    assignmentMesh.inds.push_back(pt_ii); assignmentMesh.inds.push_back(pt_ii+4);
-    pt_ii += 5;
+      /*
+      appendRow3(pts_, center_pos/4., pt_ii);
+      appendRow4(colors_, color, pt_ii);
+      assignmentMesh.inds.push_back(pt_ii);
+      pt_ii++;
+      */
+      appendRow3(pts_, center_pos/4., pt_ii);
+      for (int i=0; i<4; i++) appendRow3(pts_, Vector3 { it->vertex(i)->point()[0], it->vertex(i)->point()[1], it->vertex(i)->point()[2] }, pt_ii+1+i);
+      for (int i=0; i<5; i++) appendRow4(colors_, color, pt_ii+i);
+      assignmentMesh.inds.push_back(pt_ii); assignmentMesh.inds.push_back(pt_ii+1);
+      assignmentMesh.inds.push_back(pt_ii); assignmentMesh.inds.push_back(pt_ii+2);
+      assignmentMesh.inds.push_back(pt_ii); assignmentMesh.inds.push_back(pt_ii+3);
+      assignmentMesh.inds.push_back(pt_ii); assignmentMesh.inds.push_back(pt_ii+4);
+      pt_ii += 5;
+    }
+    assignmentMesh.verts = pts_.topRows(pt_ii);
+    assignmentMesh.colors = colors_.topRows(pt_ii);
   }
-  assignmentMesh.verts = pts_.topRows(pt_ii);
-  assignmentMesh.colors = colors_.topRows(pt_ii);
 }

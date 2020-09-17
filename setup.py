@@ -2,7 +2,8 @@ import os
 from setuptools import setup, Extension
 from torch.utils import cpp_extension
 
-libs = ['GLEW', 'GL', 'CGAL','CGAL_Core','gmp']
+#libs = ['GLEW', 'GL', 'CGAL','CGAL_Core','gmp']
+libs = ['GLEW', 'GL', 'gmp']
 
 USE_ENERGY_STUFF = True
 if USE_ENERGY_STUFF:
@@ -17,7 +18,11 @@ setup(name='pymeshedup_c',
                  'src/mesh.cc', 'src/dt.cc',
                  'src/mfmc.cc', 'src/vu.cc',
                  'src/twod_mrf.cc'],
-                include_dirs=['/usr/local/include/eigen3', os.getcwd()+'/thirdparty/MRF2.2/'],
+                include_dirs=[
+                    '/usr/local/include/eigen3',
+                    os.getcwd()+'/thirdparty/MRF2.2/',
+                    '/opt/CGAL-5.1/include'
+                    ],
                 extra_compile_args=['-O3', '-fopenmp'],
                 library_dirs=['/usr/lib/x86_64-linux-gnu/', './thirdparty/MRF2.2/'],
                 libraries=libs,
