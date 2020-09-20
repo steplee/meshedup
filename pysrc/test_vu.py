@@ -12,7 +12,7 @@ from .data import get_dc_lidar
 def make_tex_from_img(img):
     tex = glGenTextures(1)
     glBindTexture(GL_TEXTURE_2D, tex)
-    img = np.copy(img,'C')
+    #img = np.copy(img,'C')
     print( ' - creating tex for img ', img.shape)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img.shape[1],img.shape[0], 0, GL_RGB, GL_UNSIGNED_BYTE, img)
     assert glGetError() == 0
@@ -20,17 +20,19 @@ def make_tex_from_img(img):
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
     assert glGetError() == 0
     glBindTexture(GL_TEXTURE_2D, 0)
+    del img
     return tex
 
 DC = True
 RENDER_COMPLEX = True
+RENDER_COMPLEX = False
 
 if not DC:
     pts = np.random.uniform(0,1,size=(900,3)).astype(np.float32)
     #elev = np.random.uniform(0,1,size=(512,512)).astype(np.float32)
     elev = np.ones((512,512),dtype=np.float32)*.5
 else:
-    STRIDE = 16
+    STRIDE = 9
     meta = get_dc_lidar({'stride':STRIDE})
     pts = meta['pts']
     #elev = np.random.uniform(0,.1,size=(512,512)).astype(np.float32)
@@ -49,6 +51,7 @@ else:
     x.values().copy_(x.values()/cnt.values()) # Now we have average values
     elev = x.to_dense().cpu().numpy()
     elev = cv2.medianBlur(elev, 5)
+    del x, cnt, coo, val
 
 dt_opts = pymeshedup_c.DTOpts()
 dt_opts.createMesh = False
@@ -57,6 +60,8 @@ st = time.time()
 dt.run(pts)
 print(' - dt took {:1f}s'.format(time.time()-st))
 #dt.mesh.bake(True)
+import gc
+gc.collect()
 
 vu = pymeshedup_c.VuMeshing(dt,1)
 vu.runWithElevationMap(elev)

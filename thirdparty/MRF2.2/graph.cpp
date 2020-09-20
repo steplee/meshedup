@@ -210,7 +210,7 @@ void Graph::prepare_graph()
             else i -> parent = (arc_forward *) &a_rev_tmp;
             a_for += k;
             i -> first_out = a_for;
-            ab_for -> last_node = i;
+            ab_for -> last_node_ = i;
 
             /* incoming arcs */
             k = (PTR_CAST) i -> first_in;
@@ -236,7 +236,7 @@ void Graph::prepare_graph()
             }
             a_rev += k;
             i -> first_in = a_rev;
-            ab_rev -> last_node = i;
+            ab_rev -> last_node_ = i;
         }
         /* i is the last node in block */
         i -> first_out = a_for;
@@ -246,7 +246,7 @@ void Graph::prepare_graph()
     /* SECOND STAGE */
     for (ab_for=arc_for_block_first; ab_for; ab_for=ab_for->next)
     {
-        ab_for -> current = ab_for -> last_node -> first_out;
+        ab_for -> current = ab_for -> last_node_ -> first_out;
     }
 
     for ( ab_for=ab_for_first, ab_rev=ab_rev_first;
@@ -298,7 +298,7 @@ void Graph::prepare_graph()
 
     for (ab_for=arc_for_block_first; ab_for; ab_for=ab_for->next)
     {
-        i = ab_for -> last_node;
+        i = ab_for -> last_node_;
         a_for = i -> first_out;
         ab_for -> current -> shift     = a_for -> shift;
         ab_for -> current -> r_cap     = a_for -> r_cap;
@@ -310,7 +310,7 @@ void Graph::prepare_graph()
     /* THIRD STAGE */
     for (ab_rev=arc_rev_block_first; ab_rev; ab_rev=ab_rev->next)
     {
-        ab_rev -> current = ab_rev -> last_node -> first_in;
+        ab_rev -> current = ab_rev -> last_node_ -> first_in;
     }
 
     for (nb=node_block_first; nb; nb=nb->next)
@@ -336,7 +336,7 @@ void Graph::prepare_graph()
 
     for (ab_rev=arc_rev_block_first; ab_rev; ab_rev=ab_rev->next)
     {
-        i = ab_rev -> last_node;
+        i = ab_rev -> last_node_;
         a_rev = i -> first_in;
         ab_rev -> current -> sister = a_rev -> sister;
         a_rev -> sister = (arc_forward *) (ab_rev -> current + 1);

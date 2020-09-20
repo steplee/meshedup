@@ -196,7 +196,7 @@ private:
         node                    nodes[NODE_BLOCK_SIZE];
     } node_block;
 
-#define last_node LAST_NODE.LAST_NODE
+#define last_node_ LAST_NODE.LAST_NODE
 
     typedef struct arc_for_block_st
     {

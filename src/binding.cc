@@ -15,7 +15,8 @@
 #include <torch/extension.h>
 
 //#include "tensorOctreeToMesh.h"
-IndexedMesh tensorOctreeToMesh(torch::Tensor& t);
+IndexedMesh tensorOctreeToMesh(std::vector<torch::Tensor>& ts);
+void tensorOctreeBalance(std::vector<torch::Tensor>& ts);
 
 //https://stackoverflow.com/questions/48982143/returning-and-passing-around-raw-pod-pointers-arrays-with-python-c-and-pyb
 // Just a pointer type that doesn't delete or refcnt
@@ -44,7 +45,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     .def_readwrite("depth", &Node::depth)
     .def_readwrite("id", &Node::id)
     .def("child", [](Node& self, int i) { return self.children[i]; })
-    .def("__repr__", [](Node& s) { return "Node(" 
+    .def("__repr__", [](Node& s) { return "Node("
         + std::to_string(s.loc(0)) + " " + std::to_string(s.loc(1))
         + " " + std::to_string(s.loc(2)) + ", " + std::to_string(s.depth)
         + " id " + std::to_string(s.id) + ")"; })
@@ -115,6 +116,8 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   py::class_<EnergySurfacing2d, std::shared_ptr<EnergySurfacing2d>>(m, "EnergySurfacing2d")
     .def(py::init<>())
     .def("runWithElevationMap", &EnergySurfacing2d::runWithElevationMap)
+    .def("make_mesh", &EnergySurfacing2d::make_mesh)
+    .def("make_mesh_simplified", &EnergySurfacing2d::make_mesh_simplified)
     .def_readwrite("dataShape", &EnergySurfacing2d::dataShape)
     .def_readwrite("dataBoundaryCost", &EnergySurfacing2d::dataBoundaryCost)
     .def_readwrite("smoothMult", &EnergySurfacing2d::smoothMult)
@@ -124,5 +127,6 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
 
   // Tensor octree stuff
   m.def("tensorOctreeToMesh", &tensorOctreeToMesh);
+  m.def("tensorOctreeBalance", &tensorOctreeBalance);
 }
 
