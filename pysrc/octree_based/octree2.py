@@ -4,6 +4,13 @@ import gc
 import pymeshedup_c
 import numpy as np
 
+def get_tensor_type(device,dtype):
+    mod = torch.cuda.sparse if device.type == 'cuda' else torch.sparse
+    if dtype == torch.float32: return mod.FloatTensor
+    if dtype == torch.int64: return mod.LongTensor
+    if dtype == torch.int8 or dtype == torch.uint8: return mod.ByteTensor
+    assert False
+
 def make_averaged_sparse_tensor(inds, vals, size=None):
     assert vals.ndimension() == 2
     ones = torch.ones((inds.size(1),1), device=inds.device)
@@ -107,24 +114,28 @@ def balance_octree(lvls):
     return missing
 
 
-class Octree:
+# First, builds structure.
+# Second, does 'point aggregation', which never goes outside of the structure.
+#
+# Point Aggregation relies on shifting points and sparse pointwise multplication, and can be done in batches
+# if memory is a concern.
+class OctreeTwoPhase:
     def __init__(self, pts, vals, maxDepth):
         self.lvls = [None] * maxDepth
         self.maxDepth = maxDepth
+
 
         st = time.time()
         for i in range(0,maxDepth):
             if i == 0:
                 inds_i = (pts.t() * (1<<maxDepth)).to(torch.int64)
-                vals_i = vals
-                vals_i = torch.cat((torch.ones_like(vals), vals),1)
+                invScale_i = torch.ones((inds_i.size(1),1), device=pts.device, dtype=torch.int8) << (maxDepth-i)
             else:
                 inds_i = self.lvls[i-1].indices() // 2
-                vals_i = self.lvls[i-1].values().clone()
-                vals_i[:,0] = 1<<i
+                invScale_i = torch.ones((inds_i.size(1),1), device=pts.device, dtype=torch.int8) << (maxDepth-i)
             sz = (1<<(maxDepth-i),)*3
-            self.lvls[i] = make_averaged_sparse_tensor(inds_i,vals_i, torch.Size((*sz,vals_i.size(1))))
-            del inds_i, vals_i
+            self.lvls[i] = make_averaged_sparse_tensor(inds_i,invScale_i, torch.Size((*sz,invScale_i.size(1))))
+            del inds_i, invScale_i
             gc.collect()
             print(' - {:2d}: size {:8d}^3, {:8d} nnz'.format(i,self.lvls[i].size(0),len(self.lvls[i].values())))
 
@@ -138,8 +149,6 @@ class Octree:
     def balance(self):
         pass
 
-    # Dual octree meshing
-    # Not going to be easy...
     def mesh_it(self):
         pass
 
@@ -171,7 +180,7 @@ except:
         #pts = torch.rand(10000, 3, dtype=torch.float32, device=torch.device('cuda'))
         vals = torch.randn(pts.size(0),1, device=pts.device).to(torch.float32)
 
-        o = Octree(pts,vals, 14)
+        o = OctreeTwoPhase(pts,vals, 14)
 
         '''
         pymeshedup_c.tensorOctreeToMesh(o.lvls)
@@ -189,3 +198,4 @@ except:
         print(' - Size before balance:', len(o))
         balance_octree(o.lvls)
         print(' - Size after  balance:', len(o))
+
